@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 
 import { Plus, Trash2, Check } from 'lucide-react';
 
@@ -6,45 +6,52 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface Todo {
-  id: number;
-  text: string;
-  completed: boolean;
-}
+import { getTaskInitialState, taskReducer } from './reducer/tasksReducer';
 
 export const TasksApp = () => {
-  const [todos, setTodos] = useState<Todo[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [state, dispatch] = useReducer(taskReducer, getTaskInitialState());
+
+  useEffect(() => {
+    console.log({ state });
+    localStorage.setItem('tasks-state', JSON.stringify(state));
+  }, [state]);
 
   const addTodo = () => {
-    console.log('Agregar tarea', inputValue);
+    if (inputValue.length === 0) return;
+
+    dispatch({ type: 'ADD_TODO', payload: inputValue });
+    setInputValue('');
   };
 
   const toggleTodo = (id: number) => {
-    console.log('Cambiar de true a false', id);
+    dispatch({ type: 'TOGGLE_TODO', payload: id });
   };
 
   const deleteTodo = (id: number) => {
-    console.log('Eliminar tarea', id);
+    dispatch({ type: 'DELETE_TODO', payload: id });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    console.log('Presiono enter');
+    if (e.key === 'Enter') {
+      addTodo();
+    }
   };
 
-  const completedCount = todos.filter((todo) => todo.completed).length;
-  const totalCount = todos.length;
+  const { todos, completed: completedCount, length: totalCount } = state;
+
+  // const completedCount = todos.filter((todo) => todo.completed).length;
+  // const totalCount = todos.length;
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4'>
       <div className='mx-auto max-w-2xl'>
         <div className='mb-8 text-center'>
           <h1 className='text-4xl font-bold text-slate-800 mb-2'>
-            Lista de Tareas
+            List of Tasks
           </h1>
           <p className='text-slate-600'>
-            Mantén tus tareas organizadas y consigue hacerlas
+            keep your tasks organized and follow up on them
           </p>
         </div>
 
@@ -72,7 +79,7 @@ export const TasksApp = () => {
           <Card className='mb-6 shadow-lg border-0 bg-white/80 backdrop-blur-sm'>
             <CardHeader className='pb-3'>
               <CardTitle className='text-lg font-semibold text-slate-700'>
-                Progreso
+                Progress
               </CardTitle>
             </CardHeader>
             <CardContent className='pt-0'>
@@ -95,7 +102,7 @@ export const TasksApp = () => {
         <Card className='shadow-lg border-0 bg-white/80 backdrop-blur-sm'>
           <CardHeader>
             <CardTitle className='text-lg font-semibold text-slate-700'>
-              Tareas
+              Todo
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -104,10 +111,8 @@ export const TasksApp = () => {
                 <div className='w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center'>
                   <Check className='w-8 h-8 text-slate-400' />
                 </div>
-                <p className='text-slate-500 text-lg mb-2'>No hay tareas</p>
-                <p className='text-slate-400 text-sm'>
-                  Añade una tarea arriba para empezar
-                </p>
+                <p className='text-slate-500 text-lg mb-2'>There is no todos</p>
+                <p className='text-slate-400 text-sm'>Add a todo to start</p>
               </div>
             ) : (
               <div className='space-y-2'>
